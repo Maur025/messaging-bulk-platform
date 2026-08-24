@@ -1,5 +1,6 @@
 import {
   Bold,
+  CheckCircle2Icon,
   Hash,
   ImagePlus,
   Info,
@@ -15,9 +16,11 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 import { fetchApi } from "./common/utils/fetch-api";
+import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+import { Input } from "./components/ui/input";
 import {
   Select,
   SelectContent,
@@ -28,20 +31,58 @@ import {
 import { useGlobalActionStore } from "./modules/whatsapp/context/useGlobalActionStore";
 import type { ChannelResponse } from "./modules/whatsapp/interfaces/channel-response";
 
+const RECIPIENTS_STORAGE_KEY = "recipients";
 interface ChannelOption {
   name: string;
   value: string;
 }
 
-const recipients = [
-  {
-    initials: "MM",
-    name: "Mauro Moya",
-    phone: "59169775083",
-    country: "BO",
-    color: "bg-primary", // bg-accent - bg-secondary - bg-muted
-  },
-];
+interface Recipient {
+  initials: string;
+  name: string;
+  phone: string;
+  country: string;
+  color: string;
+}
+
+interface AlertBadgeProps {
+  show: boolean;
+  title?: string;
+  description?: string;
+  type?: "success" | "error" | "info" | "warning";
+}
+
+// const recipients = [
+//   {
+//     initials: "MM",
+//     name: "Mauro Moya",
+//     phone: "59169775083",
+//     country: "BO",
+//     color: "bg-primary", // bg-accent - bg-secondary - bg-muted
+//   },
+// ];
+
+const getHourAndMinute = (timestamp: number) => {
+  if (!timestamp) {
+    return "00:00";
+  }
+
+  return new Date(timestamp).toLocaleTimeString("es-BO", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const getRecipientsFromSessionStorage = (): Recipient[] => {
+  const recipientsString = sessionStorage.getItem(RECIPIENTS_STORAGE_KEY);
+
+  if (!recipientsString) {
+    return [];
+  }
+
+  return JSON.parse(recipientsString) as Recipient[];
+};
 
 function App() {
   const { setAction } = useGlobalActionStore();
@@ -50,26 +91,115 @@ function App() {
   const [channelSelected, setChannelSelected] = useState<string | null>(null);
   const [channelTypeSelected, setChannelTypeSelected] = useState("WhatsApp");
 
+  const [timestamp, setTimestamp] = useState<number>(new Date().getTime());
+  const [recipients, setRecipients] = useState<Recipient[]>(getRecipientsFromSessionStorage());
+
+  const [showAddReceiptForm, setShowAddReceiptForm] = useState<boolean>(false);
+
+  const [alertBadge, setAlertBadge] = useState<AlertBadgeProps>({
+    show: false,
+    title: "",
+    description: "",
+    type: "success",
+  });
+
   const [message, setMessage] = useState<string>("");
 
   const updateMessage = (messageValue: string) => {
-    console.log(messageValue);
-
     setMessage(messageValue);
   };
+
+  const onSubmitAddRecipient = (event: React.SubmitEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    if (!data.phoneNumber || !data.countryCode) {
+      console.error("Phone number or country code is missing. Cannot add recipient.");
+      return;
+    }
+
+    setRecipients((prevRecipients) => {
+      const newRecipients = [
+        ...prevRecipients,
+        {
+          initials: "UN",
+          name: "Desconocido",
+          phone: `${data.countryCode}${data.phoneNumber}`,
+          country: data.countryCode === "591" ? "BO" : "US",
+          color: "bg-accent",
+        },
+      ];
+
+      sessionStorage.setItem(RECIPIENTS_STORAGE_KEY, JSON.stringify(newRecipients));
+
+      return newRecipients;
+    });
+
+    event.currentTarget.reset();
+    setShowAddReceiptForm(false);
+  };
+
+  const removeReceiptInList = (phoneNumber: string) => {
+    setRecipients((prevRecipients) => {
+      const newRecipients = prevRecipients.filter((rec) => rec.phone !== phoneNumber);
+
+      sessionStorage.setItem(RECIPIENTS_STORAGE_KEY, JSON.stringify(newRecipients));
+
+      return newRecipients;
+    });
+  };
+
+  const removeAllRecipients = () => {
+    sessionStorage.removeItem(RECIPIENTS_STORAGE_KEY);
+    setRecipients([]);
+  };
+
+  useEffect(() => {
+    if (!alertBadge.show) {
+      return;
+    }
+
+    setTimeout(() => {
+      setAlertBadge({
+        show: false,
+        title: "",
+        description: "",
+        type: "success",
+      });
+    }, 5000);
+  }, [alertBadge]);
 
   useEffect(() => {
     const sendMessage = async () => {
       if (!channelSelected || !message) {
         console.error("Channel or message is missing. Cannot send the message.");
+        setAlertBadge({
+          show: true,
+          title: "Error al agregar a la cola de envío",
+          description: "El canal o el mensaje no pueden estar vacíos.",
+          type: "error",
+        });
         return;
       }
 
-      console.log({ channelSelected, message });
-      fetchApi({
+      await fetchApi({
         resource: "whatsapp/queue",
         method: "POST",
-        body: { channelIds: [channelSelected], message, type: "TEXT", toList: ["59169775083"] },
+        body: {
+          channelIds: [channelSelected],
+          message,
+          type: "TEXT",
+          toList: recipients.map((recipient) => recipient.phone),
+        },
+      });
+
+      setAlertBadge({
+        show: true,
+        title: "Agregado a la cola de envío",
+        description: "El mensaje ha sido agregado a la cola de envío con éxito.",
+        type: "success",
       });
     };
 
@@ -78,7 +208,7 @@ function App() {
     return () => {
       setAction(null);
     };
-  }, [setAction, channelSelected, message]);
+  }, [setAction, channelSelected, message, recipients]);
 
   useEffect(() => {
     const getChannelOptions = async () => {
@@ -86,8 +216,6 @@ function App() {
         resource: "channels",
         method: "GET",
       });
-
-      console.log(response);
 
       if (!response) {
         return;
@@ -192,8 +320,18 @@ function App() {
                   <Users className="size-3.5" />
                   Audiencia
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] tracking-normal text-foreground">
-                    0 contactos
+                    {recipients.length} contactos
                   </span>
+                  {recipients.length > 0 && (
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-xs font-medium text-danger hover:underline cursor-pointer"
+                      onClick={removeAllRecipients}
+                    >
+                      <X className="size-3.5" />
+                      Vaciar lista
+                    </button>
+                  )}
                 </h2>
 
                 <button
@@ -248,6 +386,7 @@ function App() {
                         type="button"
                         className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                         aria-label={`Quitar a ${person.phone}`}
+                        onClick={() => removeReceiptInList(person.phone)}
                       >
                         <X className="size-3.5" />
                       </button>
@@ -255,9 +394,37 @@ function App() {
                   ))}
                 </ul>
 
+                {showAddReceiptForm && (
+                  <form
+                    onSubmit={onSubmitAddRecipient}
+                    className="flex items-center justify-between gap-2 py-2 px-3"
+                  >
+                    <Select name="countryCode" value="591">
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Código" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value="591"> + 591</SelectItem>
+                        <SelectItem value="1"> + 1</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Input name="phoneNumber" placeholder="Ingrese número" />
+
+                    <button
+                      className="rounded-md p-1 text-muted-foreground hover:bg-muted cursor-pointer"
+                      aria-label="Añadir número a la lista"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </form>
+                )}
+
                 <button
                   type="button"
                   className="flex w-full items-center justify-center gap-2 border-t border-border py-2.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+                  onClick={() => setShowAddReceiptForm(true)}
                 >
                   <Plus className="size-3.5" />
                   Añadir número manualmente
@@ -339,6 +506,19 @@ function App() {
               </div>
             </section>
 
+            {alertBadge.show && (
+              <Alert
+                variant={alertBadge.type === "error" ? "destructive" : "default"}
+                className="max-w-md"
+              >
+                <CheckCircle2Icon />
+                <AlertTitle>Agregado a la cola de envío</AlertTitle>
+                <AlertDescription>
+                  El mensaje ha sido agregado a la cola de envío con éxito.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
               <ShieldCheck className="size-4" /> Mensaje listo para revisión.
             </div> */}
@@ -383,12 +563,14 @@ function App() {
               {/* Preview content */}
               <div className="flex min-h-70 flex-col justify-end gap-3 bg-muted/20 p-4">
                 <div className="self-center rounded bg-muted px-2 py-1 text-[9px] text-muted-foreground">
-                  HOY, 10:42
+                  HOY, {getHourAndMinute(timestamp)}
                 </div>
 
                 <div className="max-w-[88%] self-end rounded-2xl rounded-br-sm bg-primary px-3 py-2.5 text-xs leading-5 text-primary-foreground">
-                  <p>{message || "Mensaje de difusión."}</p>
-                  <div className="mt-1 text-right text-[9px] opacity-70">10:42 ✓</div>
+                  <p className="whitespace-pre-wrap">{message || "Mensaje de difusión."}</p>
+                  <div className="mt-1 text-right text-[9px] opacity-70">
+                    {getHourAndMinute(timestamp)} ✓
+                  </div>
                 </div>
 
                 <div className="max-w-[82%] self-start rounded-2xl rounded-bl-sm border border-border bg-card px-3 py-2.5 text-xs leading-5">
@@ -426,7 +608,7 @@ function App() {
 
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Destinatarios</span>
-                <span className="font-medium">4 contactos</span>
+                <span className="font-medium">{recipients.length} contactos</span>
               </div>
 
               <div className="flex items-center justify-between">
