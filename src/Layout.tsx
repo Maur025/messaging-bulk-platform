@@ -18,12 +18,15 @@ import {
   Sun,
 } from "lucide-react";
 import NavItem from "./components/layout/NavItem";
+import { useGlobalActionStore } from "./modules/whatsapp/context/useGlobalActionStore";
 
 interface Props {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: Readonly<Props>) => {
+  const { triggerAction } = useGlobalActionStore();
+
   const [themeLight, setThemeLight] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
@@ -151,6 +154,7 @@ const Layout = ({ children }: Readonly<Props>) => {
               <button
                 type="button"
                 className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                onClick={triggerAction}
               >
                 <Play className="size-3" fill="currentColor" />
                 Revisar y enviar
