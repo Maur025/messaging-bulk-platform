@@ -18,12 +18,15 @@ import {
   Sun,
 } from "lucide-react";
 import NavItem from "./components/layout/NavItem";
+import { useGlobalActionStore } from "./modules/whatsapp/context/useGlobalActionStore";
 
 interface Props {
   children: React.ReactNode;
 }
 
 const Layout = ({ children }: Readonly<Props>) => {
+  const { triggerAction } = useGlobalActionStore();
+
   const [themeLight, setThemeLight] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
@@ -78,7 +81,7 @@ const Layout = ({ children }: Readonly<Props>) => {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden cursor-pointer"
                 onClick={toggleSidebar}
                 aria-label="Abrir navegación"
               >
@@ -87,7 +90,7 @@ const Layout = ({ children }: Readonly<Props>) => {
 
               <button
                 type="button"
-                className="hidden rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:block"
+                className="hidden rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:block cursor-pointer"
                 onClick={toggleSidebar}
                 aria-label="Colapsar navegación"
               >
@@ -111,7 +114,7 @@ const Layout = ({ children }: Readonly<Props>) => {
               {/* Help button */}
               <button
                 type="button"
-                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
                 aria-label="Ayuda"
               >
                 <CircleHelp className="size-4" />
@@ -120,7 +123,7 @@ const Layout = ({ children }: Readonly<Props>) => {
               {/* Notification button */}
               <button
                 type="button"
-                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
                 aria-label="Notificaciones"
               >
                 <Bell className="size-4" />
@@ -129,7 +132,7 @@ const Layout = ({ children }: Readonly<Props>) => {
               {/* Theme button */}
               <button
                 type="button"
-                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
                 aria-label="Cambiar tema"
                 onClick={toggleTheme}
               >
@@ -141,7 +144,7 @@ const Layout = ({ children }: Readonly<Props>) => {
               {/* Save draft button */}
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted cursor-pointer"
               >
                 <Save className="size-3" />
                 Guardar borrador
@@ -150,7 +153,8 @@ const Layout = ({ children }: Readonly<Props>) => {
               {/* send button */}
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+                className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 cursor-pointer"
+                onClick={triggerAction}
               >
                 <Play className="size-3" fill="currentColor" />
                 Revisar y enviar

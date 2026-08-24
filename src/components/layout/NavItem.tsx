@@ -12,7 +12,7 @@ const NavItem = ({ icon, label, count, active, expanded }: Props) => {
   return (
     <button
       type="button"
-      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs transition-colors ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"} ${expanded ? "" : "justify-center"}`}
+      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs transition-colors cursor-pointer ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"} ${expanded ? "" : "justify-center"}`}
       aria-current={active ? "page" : undefined}
       title={!expanded ? label : undefined}
     >
