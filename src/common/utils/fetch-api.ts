@@ -1,4 +1,4 @@
-import { environments } from "../../config/env";
+import { environments } from "../config/env";
 import type { APIResponse } from "../interfaces/api-response";
 
 interface Request {

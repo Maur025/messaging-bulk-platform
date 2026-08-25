@@ -12,17 +12,28 @@ import {
   MessageCircle,
   MessageCircleCodeIcon,
   Moon,
-  Play,
-  Save,
   Settings2,
   Sun,
 } from "lucide-react";
 import { Outlet } from "react-router";
+import { useSocketStore } from "./common/context/useSocketStore";
+import { useSocketHandler } from "./common/hooks/useSocketHandler";
 import NavItem from "./components/layout/NavItem";
-import { useGlobalActionStore } from "./modules/whatsapp/context/useGlobalActionStore";
+import { useToolbarContextStore } from "./modules/whatsapp/context/useToolbarContextStore";
+
+const onSafeAction = async (callback?: () => Promise<void>) => {
+  if (!callback) {
+    return;
+  }
+
+  await callback();
+};
 
 const Layout = () => {
-  const { triggerAction } = useGlobalActionStore();
+  const { toolbarContext } = useToolbarContextStore();
+
+  const { socket, connect, disconnect } = useSocketStore();
+  useSocketHandler({ socket, connect, disconnect });
 
   const [themeLight, setThemeLight] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
@@ -127,11 +138,9 @@ const Layout = () => {
               </button>
 
               <div>
-                <p className="text-sm font-medium">Campaña nueva</p>
+                <p className="text-sm font-medium">{toolbarContext?.title || ""}</p>
 
-                <p className="text-xs text-muted-foreground">
-                  Sin guardar - Editado hace un momento
-                </p>
+                <p className="text-xs text-muted-foreground">{toolbarContext?.subTitle || ""}</p>
               </div>
             </div>
 
@@ -167,23 +176,28 @@ const Layout = () => {
               <div className="mx-2 hidden h-5 border-l border-border sm:block" />
 
               {/* Save draft button */}
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted cursor-pointer"
-              >
-                <Save className="size-3" />
-                Guardar borrador
-              </button>
+              {toolbarContext?.showSecondaryButton && (
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium hover:bg-muted cursor-pointer"
+                >
+                  {toolbarContext?.secondaryButtonIcon !== undefined &&
+                    toolbarContext?.secondaryButtonIcon}
+                  {toolbarContext?.secondaryButtonText || "secondary button"}
+                </button>
+              )}
 
               {/* send button */}
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 cursor-pointer"
-                onClick={triggerAction}
-              >
-                <Play className="size-3" fill="currentColor" />
-                Revisar y enviar
-              </button>
+              {toolbarContext?.showMainButton && (
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 cursor-pointer"
+                  onClick={() => onSafeAction(toolbarContext?.mainButtonAction)}
+                >
+                  {toolbarContext?.mainButtonIcon !== null && toolbarContext?.mainButtonIcon}
+                  {toolbarContext?.mainButtonText || "main button"}
+                </button>
+              )}
             </div>
           </header>
 
