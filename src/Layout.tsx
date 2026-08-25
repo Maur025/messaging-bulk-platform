@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleHelp,
+  LogIn,
   Menu,
   MessageCircle,
   MessageCircleCodeIcon,
@@ -58,15 +59,43 @@ const Layout = () => {
           </div>
 
           <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Secciones">
-            <NavItem icon={<MessageCircle />} label="Nueva Campaña" active expanded={sidebarOpen} />
+            <NavItem
+              icon={<MessageCircle />}
+              label="Nueva Campaña"
+              expanded={sidebarOpen}
+              path="/"
+            />
 
-            <NavItem icon={<Archive />} label="Borradores" count="0" expanded={sidebarOpen} />
+            <NavItem
+              icon={<LogIn />}
+              label="Iniciar Sesión"
+              expanded={sidebarOpen}
+              path="/auth-whatsapp"
+            />
 
-            <NavItem icon={<BarChart3 />} label="Analítica" expanded={sidebarOpen} />
+            <NavItem
+              icon={<Archive />}
+              label="Borradores"
+              count="0"
+              expanded={sidebarOpen}
+              path="/drafts"
+            />
+
+            <NavItem
+              icon={<BarChart3 />}
+              label="Analítica"
+              expanded={sidebarOpen}
+              path="/analytics"
+            />
 
             <div className="my-4 border-t border-border"></div>
 
-            <NavItem icon={<Settings2 />} label="Configuración" expanded={sidebarOpen} />
+            <NavItem
+              icon={<Settings2 />}
+              label="Configuración"
+              expanded={sidebarOpen}
+              path="/settings"
+            />
           </nav>
 
           {/* add user profile (Optional) */}
