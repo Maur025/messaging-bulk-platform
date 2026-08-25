@@ -156,6 +156,44 @@ function App() {
     setRecipients([]);
   };
 
+  const handleFileUpdated = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (loadEvent) => {
+      const text = loadEvent.target?.result as string;
+
+      const phoneList = text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line !== "" && /^\d+$/.test(line));
+
+      const newRecipients: Recipient[] = phoneList.map((phone) => ({
+        initials: "UN",
+        name: "Desconocido",
+        phone: `591${phone}`,
+        country: "BO",
+        color: "bg-accent",
+      }));
+
+      setRecipients(() => {
+        sessionStorage.setItem(RECIPIENTS_STORAGE_KEY, JSON.stringify(newRecipients));
+        return newRecipients;
+      });
+    };
+
+    reader.onerror = (loadEvent) => {
+      console.error("Error reading file:", loadEvent.target?.error);
+    };
+
+    reader.readAsText(file);
+  };
+
   useEffect(() => {
     if (!alertBadge.show) {
       return;
@@ -342,6 +380,14 @@ function App() {
                   Agregar
                 </button>
               </div>
+              <div className="flex items-center justify-between gap-2 py-2 px-3">
+                <Input
+                  type="file"
+                  accept=".txt"
+                  placeholder="Seleccione archivo .txt"
+                  onChange={handleFileUpdated}
+                />
+              </div>
               {/* Recipients list */}
               <div className="rounded-xl border border-border">
                 <div className="flex items-center gap-2 border-b border-border px-3 py-2">
@@ -363,7 +409,7 @@ function App() {
                   </button>
                 </div>
 
-                <ul className="divide-y divide-border">
+                <ul className="divide-y divide-border overflow-y-auto max-h-48">
                   {recipients.map((person) => (
                     <li key={person.phone} className="flex items-center gap-3 px-3 py-3">
                       <div
@@ -518,10 +564,6 @@ function App() {
                 </AlertDescription>
               </Alert>
             )}
-
-            {/* <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-primary">
-              <ShieldCheck className="size-4" /> Mensaje listo para revisión.
-            </div> */}
           </div>
         </section>
 

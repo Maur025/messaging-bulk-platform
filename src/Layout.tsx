@@ -1,4 +1,3 @@
-import type React from "react";
 import { useState } from "react";
 
 import {
@@ -17,14 +16,11 @@ import {
   Settings2,
   Sun,
 } from "lucide-react";
+import { Outlet } from "react-router";
 import NavItem from "./components/layout/NavItem";
 import { useGlobalActionStore } from "./modules/whatsapp/context/useGlobalActionStore";
 
-interface Props {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: Readonly<Props>) => {
+const Layout = () => {
   const { triggerAction } = useGlobalActionStore();
 
   const [themeLight, setThemeLight] = useState<boolean>(false);
@@ -162,7 +158,9 @@ const Layout = ({ children }: Readonly<Props>) => {
             </div>
           </header>
 
-          <main className="flex min-h-0 flex-1 flex-col overflow-auto">{children}</main>
+          <main className="flex min-h-0 flex-1 flex-col overflow-auto">
+            <Outlet />
+          </main>
         </section>
       </div>
     </div>
