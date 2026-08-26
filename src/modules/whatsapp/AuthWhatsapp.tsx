@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSocketStore } from "../../common/context/useSocketStore";
 import { Input } from "../../components/ui/input";
 
+import { toast } from "@/components/ui/toast";
 import QRCode from "react-qr-code";
 import { fetchApi } from "../../common/utils/fetch-api";
 import {
@@ -40,7 +41,13 @@ const AuthWhatsapp = () => {
     const dataInForm = Object.fromEntries(formData.entries());
 
     if (!dataInForm.channelName || !dataInForm.countryCode || !dataInForm.phoneNumber) {
-      console.error("Channel name, country code and phone number are required");
+      toast.add({
+        title: "Error al solicitar el código QR",
+        description:
+          "El nombre del canal, el código de país y el número de teléfono son obligatorios.",
+        type: "error",
+        timeout: 5000,
+      });
 
       return;
     }
@@ -136,6 +143,7 @@ const AuthWhatsapp = () => {
                   placeholder="Numero de teléfono"
                   className="flex-1"
                   name="phoneNumber"
+                  min={0}
                 />
 
                 <Input

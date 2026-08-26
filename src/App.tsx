@@ -1,6 +1,5 @@
 import {
   Bold,
-  CheckCircle2Icon,
   Hash,
   ImagePlus,
   Info,
@@ -21,7 +20,6 @@ import {
 import React, { useEffect, useEffectEvent, useState } from "react";
 import "./App.css";
 import { fetchApi } from "./common/utils/fetch-api";
-import { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
 import { Input } from "./components/ui/input";
 import {
   Select,
@@ -30,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./components/ui/select";
+import { toast } from "./components/ui/toast";
 import { useToolbarContextStore } from "./modules/whatsapp/context/useToolbarContextStore";
 import type { ChannelResponse } from "./modules/whatsapp/interfaces/channel-response";
 
@@ -46,23 +45,6 @@ interface Recipient {
   country: string;
   color: string;
 }
-
-interface AlertBadgeProps {
-  show: boolean;
-  title?: string;
-  description?: string;
-  type?: "success" | "error" | "info" | "warning";
-}
-
-// const recipients = [
-//   {
-//     initials: "MM",
-//     name: "Mauro Moya",
-//     phone: "59169775083",
-//     country: "BO",
-//     color: "bg-primary", // bg-accent - bg-secondary - bg-muted
-//   },
-// ];
 
 const getHourAndMinute = (timestamp: number) => {
   if (!timestamp) {
@@ -97,13 +79,6 @@ function App() {
   const [recipients, setRecipients] = useState<Recipient[]>(getRecipientsFromSessionStorage());
 
   const [showAddReceiptForm, setShowAddReceiptForm] = useState<boolean>(false);
-
-  const [alertBadge, setAlertBadge] = useState<AlertBadgeProps>({
-    show: false,
-    title: "",
-    description: "",
-    type: "success",
-  });
 
   const [message, setMessage] = useState<string>("");
 
@@ -199,12 +174,12 @@ function App() {
   const onSendMessage = useEffectEvent(async () => {
     if (!channelSelected || !message) {
       console.error("Channel or message is missing. Cannot send the message.");
-      setAlertBadge({
-        show: true,
+      toast.add({
+        type: "error",
         title: "Error al agregar a la cola de envío",
         description: "El canal o el mensaje no pueden estar vacíos.",
-        type: "error",
       });
+
       return;
     }
 
@@ -219,28 +194,12 @@ function App() {
       },
     });
 
-    setAlertBadge({
-      show: true,
+    toast.add({
+      type: "success",
       title: "Agregado a la cola de envío",
       description: "El mensaje ha sido agregado a la cola de envío con éxito.",
-      type: "success",
     });
   });
-
-  useEffect(() => {
-    if (!alertBadge.show) {
-      return;
-    }
-
-    setTimeout(() => {
-      setAlertBadge({
-        show: false,
-        title: "",
-        description: "",
-        type: "success",
-      });
-    }, 5000);
-  }, [alertBadge]);
 
   useEffect(() => {
     setContext({
@@ -560,19 +519,6 @@ function App() {
               </div>
             </div>
           </section>
-
-          {alertBadge.show && (
-            <Alert
-              variant={alertBadge.type === "error" ? "destructive" : "default"}
-              className="max-w-md"
-            >
-              <CheckCircle2Icon />
-              <AlertTitle>Agregado a la cola de envío</AlertTitle>
-              <AlertDescription>
-                El mensaje ha sido agregado a la cola de envío con éxito.
-              </AlertDescription>
-            </Alert>
-          )}
         </div>
       </section>
 
