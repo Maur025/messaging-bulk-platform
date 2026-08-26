@@ -275,7 +275,7 @@ function App() {
       setChannelOptions(
         response.data.map((channelResponse) => ({
           name: channelResponse.name ?? "",
-          value: channelResponse.referenceId ?? "",
+          value: channelResponse.channelIdentifier ?? "",
         })),
       );
     };
@@ -344,10 +344,7 @@ function App() {
             </legend>
 
             <div className="flex gap-2">
-              <Select
-                value={channelSelected ? String(channelSelected) : null}
-                onValueChange={(val) => setChannelSelected(val)}
-              >
+              <Select value={channelSelected} onValueChange={(val) => setChannelSelected(val)}>
                 <SelectTrigger className="w-45">
                   <SelectValue placeholder="Selecciona un canal" />
                 </SelectTrigger>
@@ -457,7 +454,7 @@ function App() {
                   onSubmit={onSubmitAddRecipient}
                   className="flex items-center justify-between gap-2 py-2 px-3"
                 >
-                  <Select name="countryCode" value="591">
+                  <Select name="countryCode" defaultValue="591">
                     <SelectTrigger className="w-24">
                       <SelectValue placeholder="Código" />
                     </SelectTrigger>
