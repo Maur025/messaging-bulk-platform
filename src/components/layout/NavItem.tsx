@@ -1,37 +1,45 @@
 import type React from "react";
+import { NavLink } from "react-router";
 
 interface Props {
   icon: React.ReactNode;
   label: string;
   count?: string;
-  active?: boolean;
   expanded: boolean;
+  path: string;
 }
 
-const NavItem = ({ icon, label, count, active, expanded }: Props) => {
+const NavItem = ({ icon, label, count, expanded, path }: Props) => {
   return (
-    <button
+    <NavLink
+      to={path}
       type="button"
-      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs transition-colors cursor-pointer ${active ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"} ${expanded ? "" : "justify-center"}`}
-      aria-current={active ? "page" : undefined}
+      className={({ isActive }) =>
+        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-xs transition-colors cursor-pointer ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"} ${expanded ? "" : "justify-center"}`
+      }
+      aria-current="page"
       title={!expanded ? label : undefined}
     >
-      <span className="[&>svg]:size-4">{icon}</span>
-
-      {expanded && (
+      {({ isActive }) => (
         <>
-          <span className="flex-1">{label}</span>
+          <span className="[&>svg]:size-4">{icon}</span>
 
-          {count && (
-            <span
-              className={`rounded px-1.5 py-0.5 text-[10px] ${active ? "bg-primary-foreground/15" : "bg-muted"}`}
-            >
-              {count}
-            </span>
+          {expanded && (
+            <>
+              <span className="flex-1">{label}</span>
+
+              {count && (
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[10px] ${isActive ? "bg-primary-foreground/15" : "bg-muted"}`}
+                >
+                  {count}
+                </span>
+              )}
+            </>
           )}
         </>
       )}
-    </button>
+    </NavLink>
   );
 };
 
