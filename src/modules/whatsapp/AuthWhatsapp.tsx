@@ -5,6 +5,13 @@ import { Input } from "../../components/ui/input";
 
 import QRCode from "react-qr-code";
 import { fetchApi } from "../../common/utils/fetch-api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 import { useToolbarContextStore } from "./context/useToolbarContextStore";
 
 const AuthWhatsapp = () => {
@@ -18,22 +25,35 @@ const AuthWhatsapp = () => {
     setQrCode(payload.qr);
   };
 
+  const whatsappChannelConnected = (payload: any) => {
+    if (payload.message !== "CHANNEL CONNECTED") {
+      return;
+    }
+
+    setQrCode("");
+  };
+
   const onRequestQR = async (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget);
     const dataInForm = Object.fromEntries(formData.entries());
 
-    if (!dataInForm.channelName || !dataInForm.phoneNumber) {
-      console.error("Channel name and phone number are required");
+    if (!dataInForm.channelName || !dataInForm.countryCode || !dataInForm.phoneNumber) {
+      console.error("Channel name, country code and phone number are required");
 
       return;
     }
 
+    const phoneNumber = `${dataInForm.countryCode}${dataInForm.phoneNumber}`;
+
     await fetchApi({
       resource: `whatsapp/auth`,
       method: "POST",
-      body: { channelName: dataInForm.channelName, phoneNumber: dataInForm.phoneNumber },
+      body: {
+        name: dataInForm.channelName,
+        channelIdentifier: phoneNumber,
+      },
     });
   };
 
@@ -54,6 +74,8 @@ const AuthWhatsapp = () => {
     if (!socket) return;
 
     socket.on("whatsapp-auth-qr", whatsappAuthQRHandler);
+
+    socket.on("whatsapp-channel-connected", whatsappChannelConnected);
 
     return () => {
       socket.off("whatsapp-auth-qr", whatsappAuthQRHandler);
@@ -98,6 +120,17 @@ const AuthWhatsapp = () => {
               </legend>
 
               <div className="flex gap-3 justify-between">
+                <Select name="countryCode" defaultValue="591">
+                  <SelectTrigger className="w-24">
+                    <SelectValue placeholder="Código" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    <SelectItem value="591"> + 591</SelectItem>
+                    <SelectItem value="1"> + 1</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <Input
                   type="number"
                   placeholder="Numero de teléfono"

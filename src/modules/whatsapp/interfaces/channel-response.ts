@@ -5,7 +5,7 @@ export interface ChannelResponse {
   name: string;
   channelTypeId: string;
   companyId?: string | null;
-  referenceId: string | null;
+  channelIdentifier: string | null;
   host?: string | null;
   port?: number | null;
   username?: string | null;
