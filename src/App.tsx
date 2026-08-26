@@ -93,7 +93,7 @@ function App() {
   const [channelSelected, setChannelSelected] = useState<string | null>(null);
   const [channelTypeSelected, setChannelTypeSelected] = useState("WhatsApp");
 
-  const [timestamp, setTimestamp] = useState<number>(new Date().getTime());
+  const [timestamp] = useState<number>(new Date().getTime());
   const [recipients, setRecipients] = useState<Recipient[]>(getRecipientsFromSessionStorage());
 
   const [showAddReceiptForm, setShowAddReceiptForm] = useState<boolean>(false);
