@@ -19,8 +19,21 @@ import { Outlet } from "react-router";
 import { useSocketStore } from "./common/context/useSocketStore";
 import { useSocketHandler } from "./common/hooks/useSocketHandler";
 import NavItem from "./components/layout/NavItem";
-import { Toaster } from "./components/ui/toast";
+import { toast, Toaster } from "./components/ui/toast";
 import { useToolbarContextStore } from "./modules/whatsapp/context/useToolbarContextStore";
+
+interface JobCountResponse {
+  active: number;
+  completed: number;
+  delayed: number;
+  failed: number;
+  paused: number;
+  prioritized: number;
+  repeat: number;
+  wait: number;
+  waiting: number;
+  "waiting-children": number;
+}
 
 const onSafeAction = async (callback?: () => Promise<void>) => {
   if (!callback) {
@@ -39,12 +52,38 @@ const Layout = () => {
   const [themeLight, setThemeLight] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
+  const [jobCounts, setJobCounts] = useState<JobCountResponse | null>(null);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   const toggleTheme = () => {
     setThemeLight(!themeLight);
+  };
+
+  const queueWpJobsEventHandler = (payload: any) => {
+    if (!payload?.jobCounts) {
+      setJobCounts(null);
+      return;
+    }
+
+    setJobCounts({ ...jobCounts, ...payload.jobCounts });
+  };
+
+  const whatsappTaskFlowCompleted = (payload: any) => {
+    if (payload?.event !== "completed") {
+      return;
+    }
+
+    toast.add({
+      title: "Flujo de tareas de WhatsApp completado",
+      description: "El flujo de tareas de WhatsApp ha sido completado exitosamente.",
+    });
+  };
+
+  const calculateRemainingJobs = () => {
+    return (jobCounts?.delayed || 0) + (jobCounts?.waiting || 0);
   };
 
   useEffect(() => {
@@ -55,6 +94,21 @@ const Layout = () => {
 
     document.getElementsByTagName("body")[0].classList.replace("light", "dark");
   }, [themeLight]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit("queue-wp-jobs-event:req", "request");
+
+    socket.on("queue-wp-jobs-event", queueWpJobsEventHandler);
+
+    socket.on("whatsapp-task-flow-completed", whatsappTaskFlowCompleted);
+
+    return () => {
+      socket.off("queue-wp-jobs-event", queueWpJobsEventHandler);
+      socket.off("whatsapp-task-flow-completed", whatsappTaskFlowCompleted);
+    };
+  }, [socket]);
 
   return (
     <div className="flex min-h-screen overflow-hidden bg-background">
@@ -199,11 +253,39 @@ const Layout = () => {
           </div>
         </header>
 
-        <main className="flex min-h-0 flex-1 flex-col overflow-auto">
+        <main className="flex min-h-0 flex-1 flex-col overflow-auto pb-8">
           <Outlet />
           <Toaster />
         </main>
       </section>
+
+      <footer className="flex flex-1 h-8 items-center fixed bottom-0 min-w-screen bg-sidebar gap-3 text-xs justify-between">
+        <div className="flex gap-3">
+          <span>En cola de espera: {jobCounts?.waiting || 0}</span>
+
+          <span>Activos: {jobCounts?.active || 0}</span>
+
+          <span>Completados: {jobCounts?.completed || 0}</span>
+
+          <span>Fallidos: {jobCounts?.failed || 0}</span>
+
+          <span>Retrasado: {jobCounts?.delayed || 0}</span>
+        </div>
+
+        <div className="w-100">
+          {calculateRemainingJobs() > 0 && (
+            <div className="flex items-center gap-2">
+              Procesando{" "}
+              <span className="text-muted-foreground w-20">
+                {calculateRemainingJobs()} restantes
+              </span>
+              <div className="h-2 w-[40%] overflow-hidden rounded-full bg-secondary relative">
+                <div className="h-full w-full bg-primary animate-[pulse_1s_infinite] origin-left-right" />
+              </div>
+            </div>
+          )}
+        </div>
+      </footer>
     </div>
   );
 };

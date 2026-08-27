@@ -522,7 +522,7 @@ function App() {
         </div>
       </section>
 
-      <aside className="flex min-h-140 flex-col bg-muted/20" aria-labelledby="preview-heading">
+      <aside className="flex min-h-120 flex-col bg-muted/20" aria-labelledby="preview-heading">
         {/* Aside header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
